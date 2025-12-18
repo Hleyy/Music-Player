@@ -2,20 +2,68 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, Repeat, Shuffle } from 'lucide-react';
 
 const TRACKS = [
   {
-    title: "à changer",
-    artist: "à changer",
-    cover: "à changer",
-    src: "à changer"
+    title: "No lie",
+    artist: "Sean Paul",
+    cover: "/images/fern.gif",
+    src: "/songs/no lie.mp3"
   },
   {
-    title: "à changer",
-    artist: "à changer",
-    cover: "à changer",
-    src: "à changer"
+    title: "Too sweet",
+    artist: "Hozier",
+    cover: "/images/fern.gif",
+    src: "/songs/too sweet.mp3"
+  },
+  {
+    title: "Just The Two of Us",
+    artist: "Bill Withers et Grover Washington",
+    cover: "/images/fern.gif",
+    src: "/songs/just the two of us.mp3"
+  },
+  {
+    title: "Shinunoga E-Wa",
+    artist: "Fujii Kaze",
+    cover: "/images/fern.gif",
+    src: "/songs/shino.mp3"
+  },
+  {
+    title: "Collide",
+    artist: "Justine Skye",
+    cover: "/images/fern.gif",
+    src: "/songs/collide.mp3"
+  },
+  {
+    title: "Merry go round",
+    artist: "YAØ",
+    cover: "/images/fern.gif",
+    src: "/songs/Merry_go_round.mp3"
+  },
+  {
+    title: "Double Tale",
+    artist: "Dhruv",
+    cover: "/images/fern.gif",
+    src: "/songs/double_take.mp3"
+  },
+  {
+    title: "Love Is Gone",
+    artist: "Dylan Matthew",
+    cover: "/images/fern.gif",
+    src: "/songs/love_is_gone.mp3"
+  },
+  {
+    title: "God Rest Ye Merry Gentlemen",
+    artist: "Pentatonix",
+    cover: "/images/fern.gif",
+    src: "/songs/god_rest_ye_marry.mp3"
+  },
+  {
+    title: "Until I Found You",
+    artist: "Stephen Sanchez",
+    cover: "/images/fern.gif",
+    src: "/songs/i_found_her.mp3"
   }
 ];
 
@@ -24,6 +72,8 @@ export default function MusicPlayer() {
   const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isLooping, setIsLooping] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(false);
   
   const audioRef = useRef(null);
   const currentTrack = TRACKS[currentTrackIndex];
@@ -57,8 +107,14 @@ useEffect(() => {
   };
 
   const nextTrack = () => {
+    if (isShuffle) {
+    // Choisit un index au hasard différent de l'actuel
+    const randomIndex = Math.floor(Math.random() * TRACKS.length);
+    setCurrentTrackIndex(randomIndex);
+  } else {
     setCurrentTrackIndex((prev) => (prev + 1) % TRACKS.length);
-    setIsPlaying(true);
+  }
+  setIsPlaying(true);
   };
 
   const prevTrack = () => {
@@ -74,7 +130,8 @@ useEffect(() => {
         ref={audioRef} 
         src={currentTrack.src} 
         onTimeUpdate={onTimeUpdate}
-        onEnded={nextTrack}
+        onEnded={isLooping ? null : nextTrack} // Si on loop, on ne passe pas à la suivante
+        loop={isLooping}
       />
 
       {/* Fond Décoratif */}
@@ -150,6 +207,11 @@ useEffect(() => {
             <SkipBack size={22} fill="currentColor" />
           </button>
           
+          <button onClick={() => setIsShuffle(!isShuffle)} 
+            className={`transition-colors p-2 ${isShuffle ? 'text-blue-400' : 'text-gray-400 hover:text-white'}`}>
+            <Shuffle size={20} />
+          </button>
+
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -159,9 +221,15 @@ useEffect(() => {
             {isPlaying ? <Pause size={28} fill="black" /> : <Play size={28} className="ml-1" fill="black" />}
           </motion.button>
 
+          <button onClick={() => setIsLooping(!isLooping)} 
+            className={`transition-colors p-2 ${isLooping ? 'text-purple-500' : 'text-gray-400 hover:text-white'}`}>
+            <Repeat size={20} />
+          </button>
+
           <button onClick={nextTrack} className="text-gray-400 hover:text-white transition-colors p-2">
             <SkipForward size={22} fill="currentColor" />
           </button>
+          
         </div>
       </motion.div>
       
