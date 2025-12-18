@@ -170,6 +170,13 @@ useEffect(() => {
             {currentTrack.title}
           </motion.h2>
           <p className="text-gray-500 text-sm mt-1">{currentTrack.artist}</p>
+          <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="text-purple-400/60 text-[10px] mt-2 font-medium tracking-widest uppercase">
+          Special thanks to Yussii_ ✨
+        </motion.p>
         </div>
 
 {/* Bare Interactif */}
