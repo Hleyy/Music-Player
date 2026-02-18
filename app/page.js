@@ -63,23 +63,41 @@ export default function ZenkaMasterPlayer() {
     if (audioRef.current) audioRef.current.volume = isMuted ? 0 : volume;
   }, [volume, isMuted]);
 
-  // --- IA WHISPER LOCALE ---
-  const loadWhisper = async () => {
+const loadWhisper = async () => {
     if (transcriberRef.current) return transcriberRef.current;
     
-    // Import dynamique pour éviter les erreurs au build Vercel
-    const { pipeline, env } = await import('@xenova/transformers');
-    env.allowLocalModels = false;
-    env.useBrowserCache = true;
-
-    transcriberRef.current = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
-      progress_callback: (p) => {
-        if (p.status === 'progress') setTranscriptionProgress(Math.round(p.progress));
+    try {
+      // 1. On importe dynamiquement
+      const Transformers = await import('@xenova/transformers');
+      
+      // 2. On vérifie si l'objet existe avant de faire quoi que ce soit
+      if (!Transformers || !Transformers.pipeline) {
+        throw new Error("Impossible de charger Transformers.js");
       }
-    });
-    return transcriberRef.current;
-  };
 
+      // 3. Configuration manuelle sans passer par Object.keys
+      // On accède directement aux propriétés pour éviter le scan de Turbopack
+      const env = Transformers.env;
+      if (env) {
+        env.allowLocalModels = false;
+        env.useBrowserCache = true;
+        // On définit manuellement les chemins pour éviter que la lib cherche partout
+        env.remoteModels = true;
+      }
+
+      // 4. Initialisation
+      transcriberRef.current = await Transformers.pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en', {
+        progress_callback: (p) => {
+          if (p.status === 'progress') setTranscriptionProgress(Math.round(p.progress));
+        }
+      });
+      
+      return transcriberRef.current;
+    } catch (error) {
+      console.error("Erreur critique IA:", error);
+      throw error;
+    }
+  };
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -180,7 +198,7 @@ export default function ZenkaMasterPlayer() {
               exit={{ opacity: 0, y: -10 }}
               className="text-lg sm:text-2xl font-light italic bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent"
             >
-              {isTranscribing ? `IA Analyse... ${transcriptionProgress}%` : (activeLine ? activeLine.text : "♪ Zenka Intelligence ♪")}
+              {isTranscribing ? `IA Analyse... ${transcriptionProgress}%` : (activeLine ? activeLine.text : "♪ Yussii_ Cover")}
             </motion.p>
           </AnimatePresence>
         </div>
@@ -196,10 +214,19 @@ export default function ZenkaMasterPlayer() {
           </motion.div>
         </div>
 
-        {/* INFOS */}
-        <div className="text-center mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold">{currentTrack.title}</h2>
-          <p className="text-gray-400 text-xs sm:text-sm mt-1">{currentTrack.artist}</p>
+        {/* Infos */}
+        <div className="text-center mb-8">
+          <motion.h2 key={currentTrack.title} initial={{y:10, opacity:0}} animate={{y:0, opacity:1}} className="text-white text-xl font-bold tracking-tight">
+            {currentTrack.title}
+          </motion.h2>
+          <p className="text-gray-500 text-sm mt-1">{currentTrack.artist}</p>
+          <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="text-purple-400/60 text-[10px] mt-2 font-medium tracking-widest uppercase">
+          Special thanks to Yussii_ ✨
+        </motion.p>
         </div>
 
         {/* PROGRESS */}
@@ -239,17 +266,6 @@ export default function ZenkaMasterPlayer() {
           <input type="range" min="0" max="1" step="0.01" value={volume} onChange={(e) => setVolume(parseFloat(e.target.value))} className="flex-1 h-1 accent-white appearance-none bg-white/10 rounded-lg" />
         </div>
       </motion.div>
-
-      {/* UPLOAD IA */}
-      <div className="mt-8 z-20 w-full max-w-[280px]">
-        <label className={`cursor-pointer flex items-center justify-center gap-4 px-6 py-4 rounded-2xl border border-white/10 transition-all ${isTranscribing ? 'bg-purple-600/80 animate-pulse' : 'bg-white/5 hover:bg-white/10'}`}>
-          <UploadCloud size={20}/>
-          <span className="text-xs font-semibold uppercase tracking-wider">
-            {isTranscribing ? "Analyse locale..." : "Scanner une cover"}
-          </span>
-          <input type="file" accept="audio/*" className="hidden" onChange={handleFileUpload} disabled={isTranscribing} />
-        </label>
-      </div>
     </div>
   );
 }
